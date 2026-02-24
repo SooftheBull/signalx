@@ -733,10 +733,10 @@ function boot() {
 // Init
 window.addEventListener('DOMContentLoaded', function() {
   boot();
-  renderNews(allNews);
+  fetchNews();
   loadPrices();
   var sb = document.getElementById('statusBar');
-  sb.innerHTML = allNews.length + ' SIGNALEN GELADEN · GROK VERIFIED · 24 FEB 2026 · KLIK OM TE OPENEN';
+  sb.innerHTML = '';
 });
 </script>
 </body>
