@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#000800">
 <title>SIGNAL.X — X Nieuws Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
@@ -124,7 +124,7 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 @keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
 /* COLLAPSED HEADER */
-.item-header{display:flex;align-items:center;gap:10px;padding:13px 0;cursor:pointer;user-select:none;transition:background .15s;position:relative;}
+.item-header{display:flex;align-items:center;gap:10px;padding:13px 0;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;transition:background .15s;position:relative;}
 .item-header::before{content:'';position:absolute;left:-8px;top:0;bottom:0;width:2px;background:var(--accent);opacity:0;transition:opacity .15s;box-shadow:var(--glow);}
 .item-header:hover::before{opacity:1;}
 .item-header:hover{background:rgba(0,255,65,.02);}
@@ -199,7 +199,7 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 @keyframes caret{0%,100%{border-color:var(--accent)}50%{border-color:transparent}}
 /* Selection */
 ::selection{background:var(--accent);color:#000;}
-</style>
+@media(max-width:600px){.wrap{padding:16px 14px 80px}header{margin-bottom:16px;padding-bottom:14px}.logo{font-size:17px;letter-spacing:2px}.x-logo{width:30px;height:30px}.header-right{font-size:9px}.live-pill{font-size:8px;padding:2px 8px}.ticker-wrap{margin-bottom:14px}.ticker-label{font-size:7px;padding:0 10px}.ticker-track{font-size:10px}.price-grid{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}.price-card{padding:12px 14px}.price-value{font-size:28px}.price-change{font-size:10px}.price-name{font-size:8px}.price-icon{width:22px;height:22px;font-size:11px}.topics-wrap{gap:6px;margin-bottom:10px}.topic-chip{font-size:9px;padding:4px 8px}.input-row{gap:6px;margin-bottom:14px}.topic-input{font-size:12px;padding:8px 10px}.btn-add{font-size:10px;padding:8px 12px}.fetch-row{padding:12px 14px;gap:10px;margin-bottom:14px;flex-wrap:wrap}.fetch-btn{font-size:10px;padding:10px 16px;width:100%;justify-content:center}.fetch-meta{font-size:9px;width:100%}.item-header{padding:12px 0;gap:7px}.item-num{font-size:8px;min-width:16px}.item-topic{font-size:6px;padding:2px 5px}.item-title{font-size:12px}.item-age{font-size:8px}.chevron{width:12px;height:12px}.item-body-inner{padding:0 0 16px 16px;gap:8px}.tweet-card{padding:10px 12px}.tweet-avatar{width:26px;height:26px;font-size:12px}.tweet-name{font-size:11px}.tweet-handle{font-size:9px}.tweet-text{font-size:11px;line-height:1.6}.tweet-stats{gap:12px;font-size:9px}.grok-box{padding:8px 10px}.grok-text{font-size:9px;line-height:1.7}.grok-icon{width:16px;height:16px;font-size:8px}.grok-lbl{font-size:7px}.grok-verdict{font-size:7px;padding:2px 6px}.status-bar{font-size:9px}.section-label{font-size:7px;margin-bottom:8px}body{overflow-x:hidden}body::before{background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.08) 3px,rgba(0,0,0,.08) 4px)}}@media(max-width:375px){.price-value{font-size:24px}.price-grid{gap:6px}.item-title{font-size:11px}.logo{font-size:15px}}@supports(padding:max(0px)){.wrap{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right));padding-bottom:max(80px,calc(env(safe-area-inset-bottom) + 20px))}}</style>
 </head>
 <body>
 <div class="wrap">
