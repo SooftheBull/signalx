@@ -92,8 +92,8 @@ header{display:flex;align-items:center;justify-content:space-between;margin-bott
 .section-label{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace;}
 .section-label::before{content:'> ';color:var(--accent);}
 .topics-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
-.topic-chip{display:flex;align-items:center;gap:6px;background:var(--green-dim);border:1px solid var(--border2);padding:4px 10px;font-size:10px;color:var(--accent);font-family:'Share Tech Mono',monospace;letter-spacing:1px;}
-.topic-chip .rm{cursor:pointer;color:var(--muted);font-size:14px;line-height:1;transition:color .15s;}
+.topic-chip{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none;background:var(--green-dim);border:1px solid var(--accent);text-shadow:var(--glow-sm);transition:all .15s;padding:4px 10px;font-size:10px;color:var(--accent);font-family:'Share Tech Mono',monospace;letter-spacing:1px;}
+.topic-chip.inactive{background:transparent;border-color:var(--border2);color:var(--muted);text-shadow:none;opacity:.5;}.topic-chip .rm{cursor:pointer;color:var(--muted);font-size:14px;line-height:1;transition:color .15s;}
 .topic-chip .rm:hover{color:var(--amber);}
 .input-row{display:flex;gap:8px;margin-bottom:20px;}
 .topic-input{flex:1;background:var(--surface);border:1px solid var(--border2);padding:8px 14px;color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;transition:border-color .2s,box-shadow .2s;caret-color:var(--accent);}
@@ -300,22 +300,11 @@ setInterval(function() {
 }, 1000);
 
 // Topics
-var topics = ['Trump', 'Epstein', 'Bitcoin', 'Musk', 'Tarieven'];
+var allTopics=[{name:'Trump',active:true},{name:'Epstein',active:true},{name:'Bitcoin',active:true},{name:'Musk',active:true},{name:'Tarieven',active:true}];function getActiveTopics(){return allTopics.filter(function(t){return t.active;}).map(function(t){return t.name;});}
 
-function renderTopics() {
-  document.getElementById('topicsWrap').innerHTML = topics.map(function(t, i) {
-    return '<div class="topic-chip">' + t + '<span class="rm" onclick="removeTopic(' + i + ')">×</span></div>';
-  }).join('');
-}
+function renderTopics(){document.getElementById('topicsWrap').innerHTML=allTopics.map(function(t,i){return'<div class="topic-chip '+(t.active?'active':'inactive')+'" onclick="toggleTopic('+i+')">'+t.name+'<span class="rm" onclick="event.stopPropagation();removeTopic('+i+')">×</span></div>';}).join('')+'<span style="font-size:9px;color:var(--muted);align-self:center;font-family:Share Tech Mono,monospace;margin-left:6px">· klik chip om aan/uit</span>';}function toggleTopic(i){allTopics[i].active=!allTopics[i].active;renderTopics();}
 
-function addTopic() {
-  var inp = document.getElementById('topicInput');
-  var v = inp.value.trim();
-  if (!v || topics.indexOf(v) !== -1) { inp.value = ''; return; }
-  topics.push(v);
-  renderTopics();
-  inp.value = '';
-}
+function addTopic(){var inp=document.getElementById('topicInput');var v=inp.value.trim();if(!v){return;}var ex=allTopics.findIndex(function(t){return t.name.toLowerCase()===v.toLowerCase();});if(ex!==-1){allTopics[ex].active=true;renderTopics();inp.value='';return;}allTopics.forEach(function(t){t.active=false;});allTopics.push({name:v,active:true});renderTopics();inp.value='';fetchNews();}
 
 function removeTopic(i) {
   topics.splice(i, 1);
@@ -628,9 +617,7 @@ function fetchNews() {
 
   setTimeout(function() {
     // Filter allNews by active topics (case-insensitive)
-    var filtered = allNews.filter(function(item) {
-      if (!topics.length) return true;
-      return topics.some(function(t) {
+    var activeTopics=getActiveTopics();var filtered=allNews.filter(function(item){if(!activeTopics.length)return true;return activeTopics.some(function(t){
         return item.topic.toLowerCase().indexOf(t.toLowerCase()) !== -1 ||
                item.title.toLowerCase().indexOf(t.toLowerCase()) !== -1 ||
                (item.tweet && item.tweet.text.toLowerCase().indexOf(t.toLowerCase()) !== -1);
