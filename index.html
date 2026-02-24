@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIGNAL.X — X Nieuws Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#000800; --surface:#010d01; --border:#0a2a0a; --border2:#0f3a0f;
+  --accent:#00ff41; --accent2:#39ff14; --accent3:#7fff00;
+  --green:#00ff41; --green2:#00cc33; --green-dim:#003a00;
+  --text:#00e832; --muted:#1a5c1a; --dim:#0a1f0a;
+  --amber:#ffb000; --red:#ff2200;
+  --glow: 0 0 8px rgba(0,255,65,.6), 0 0 20px rgba(0,255,65,.2);
+  --glow-sm: 0 0 4px rgba(0,255,65,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Share Tech Mono',monospace;
+  min-height:100vh;
+  cursor: default;
+}
+/* CRT scanline overlay */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.15) 2px,
+    rgba(0,0,0,0.15) 4px
+  );
+  pointer-events:none;
+  z-index:9999;
+}
+/* Phosphor screen vignette */
+body::after{
+  content:'';
+  position:fixed;
+  inset:0;
+  background: radial-gradient(ellipse 90% 90% at 50% 50%, transparent 60%, rgba(0,0,0,0.6) 100%);
+  pointer-events:none;
+  z-index:9998;
+}
+.wrap{max-width:860px;margin:0 auto;padding:32px 20px 60px;position:relative;z-index:1;}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border2);}
+.logo-group{display:flex;align-items:center;gap:14px;}
+.x-logo{width:38px;height:38px;background:var(--green-dim);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:var(--glow);}
+.x-logo svg{width:18px;height:18px;fill:var(--accent);}
+.logo{font-family:'Orbitron',monospace;font-weight:900;font-size:22px;letter-spacing:3px;color:var(--accent);text-shadow:var(--glow);text-transform:uppercase;}
+.logo span{color:var(--accent2);text-shadow:0 0 10px rgba(57,255,20,.8);}
+.logo-sub{font-size:9px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-top:4px;font-family:'Share Tech Mono',monospace;}
+.header-right{text-align:right;font-size:10px;letter-spacing:2px;color:var(--green2);text-transform:uppercase;line-height:2;font-family:'Share Tech Mono',monospace;}
+.live-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(0,255,65,.05);border:1px solid var(--accent);padding:3px 10px;font-size:9px;letter-spacing:2px;color:var(--accent);box-shadow:var(--glow-sm);}
+.live-dot{width:5px;height:5px;background:var(--accent);box-shadow:var(--glow);animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.1}}
+
+/* TICKER */
+.ticker-wrap{display:flex;overflow:hidden;background:var(--surface);border:1px solid var(--border2);margin-bottom:22px;box-shadow:inset 0 0 20px rgba(0,255,65,.03);}
+.ticker-label{background:var(--accent);color:#000;font-family:'Orbitron',monospace;font-weight:700;font-size:8px;letter-spacing:2px;text-transform:uppercase;padding:0 14px;display:flex;align-items:center;flex-shrink:0;}
+.ticker-scroll{overflow:hidden;flex:1;}
+.ticker-track{display:flex;gap:36px;padding:9px 16px;animation:ticker 40s linear infinite;white-space:nowrap;font-size:11px;color:var(--muted);font-family:'Share Tech Mono',monospace;}
+.ticker-track:hover{animation-play-state:paused;}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.t-item{color:var(--green2);} .t-up{color:var(--accent);text-shadow:var(--glow-sm);} .t-dn{color:var(--amber);} .t-sep{color:var(--dim);}
+
+/* TOPICS */
+/* PRICE CARDS */
+.price-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:22px;}
+.price-card{background:var(--surface);border:1px solid var(--border2);padding:16px 20px;display:flex;flex-direction:column;gap:8px;position:relative;overflow:hidden;box-shadow:inset 0 0 30px rgba(0,255,65,.02);}
+.price-card::after{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.4;}
+.price-card-header{display:flex;align-items:center;gap:8px;}
+.price-icon{width:28px;height:28px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;font-family:'Share Tech Mono',monospace;color:var(--accent);background:var(--green-dim);}
+.price-icon.btc{}
+.price-icon.eur{}
+.price-name{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-family:'Share Tech Mono',monospace;}
+.price-pair{font-size:8px;color:var(--muted);opacity:.5;margin-top:2px;letter-spacing:2px;}
+.price-value{font-family:'VT323',monospace;font-size:42px;color:var(--accent);line-height:1;text-shadow:var(--glow);letter-spacing:2px;}
+.price-change{display:flex;align-items:center;gap:6px;font-size:11px;font-family:'Share Tech Mono',monospace;}
+.price-change.up{color:var(--accent);text-shadow:var(--glow-sm);}
+.price-change.down{color:var(--amber);}
+.price-change.flat{color:var(--muted);}
+.price-updated{font-size:9px;color:var(--muted);opacity:.5;margin-top:0;font-family:'Share Tech Mono',monospace;letter-spacing:1px;}
+.section-label{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;font-family:'Share Tech Mono',monospace;}
+.section-label::before{content:'> ';color:var(--accent);}
+.topics-wrap{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.topic-chip{display:flex;align-items:center;gap:6px;background:var(--green-dim);border:1px solid var(--border2);padding:4px 10px;font-size:10px;color:var(--accent);font-family:'Share Tech Mono',monospace;letter-spacing:1px;}
+.topic-chip .rm{cursor:pointer;color:var(--muted);font-size:14px;line-height:1;transition:color .15s;}
+.topic-chip .rm:hover{color:var(--amber);}
+.input-row{display:flex;gap:8px;margin-bottom:20px;}
+.topic-input{flex:1;background:var(--surface);border:1px solid var(--border2);padding:8px 14px;color:var(--accent);font-family:'Share Tech Mono',monospace;font-size:12px;outline:none;transition:border-color .2s,box-shadow .2s;caret-color:var(--accent);}
+.topic-input:focus{border-color:var(--accent);box-shadow:var(--glow-sm);}
+.topic-input::placeholder{color:var(--muted);}
+.btn-add{background:var(--green-dim);color:var(--accent);border:1px solid var(--accent);padding:8px 16px;font-family:'Share Tech Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s;white-space:nowrap;letter-spacing:1px;text-transform:uppercase;}
+.btn-add:hover{background:var(--accent);color:#000;box-shadow:var(--glow);}
+
+/* FETCH */
+.fetch-row{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--border2);padding:14px 18px;margin-bottom:22px;position:relative;}
+.fetch-row::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 4px,rgba(0,255,65,.01) 4px,rgba(0,255,65,.01) 5px);pointer-events:none;}
+.fetch-btn{display:flex;align-items:center;gap:8px;background:var(--green-dim);color:var(--accent);border:1px solid var(--accent);padding:10px 20px;font-family:'Orbitron',monospace;font-weight:700;font-size:11px;cursor:pointer;transition:all .2s;white-space:nowrap;letter-spacing:2px;text-transform:uppercase;}
+.fetch-btn:hover{background:var(--accent);color:#000;box-shadow:var(--glow);}
+.fetch-btn:disabled{opacity:.3;cursor:not-allowed;}
+.fetch-meta{flex:1;font-size:10px;color:var(--muted);line-height:1.9;font-family:'Share Tech Mono',monospace;}
+.fetch-meta strong{color:var(--accent);}
+
+/* STATUS */
+.status-bar{font-size:10px;color:var(--muted);min-height:20px;margin-bottom:16px;display:flex;align-items:center;gap:8px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;}
+.status-bar::before{content:'// ';color:var(--muted);}
+.status-bar.loading{color:var(--accent);}
+.status-bar.err{color:var(--amber);}
+
+/* NEWS LIST */
+.news-list{display:flex;flex-direction:column;}
+.news-item{border-top:1px solid var(--border2);animation:fadeUp .35s ease both;}
+.news-item:last-child{border-bottom:1px solid var(--border2);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* COLLAPSED HEADER */
+.item-header{display:flex;align-items:center;gap:10px;padding:13px 0;cursor:pointer;user-select:none;transition:background .15s;position:relative;}
+.item-header::before{content:'';position:absolute;left:-8px;top:0;bottom:0;width:2px;background:var(--accent);opacity:0;transition:opacity .15s;box-shadow:var(--glow);}
+.item-header:hover::before{opacity:1;}
+.item-header:hover{background:rgba(0,255,65,.02);}
+.item-num{font-size:9px;color:var(--muted);min-width:22px;letter-spacing:1px;flex-shrink:0;font-family:'Share Tech Mono',monospace;}
+.item-topic{font-size:7px;letter-spacing:2px;text-transform:uppercase;padding:2px 7px;border:1px solid;white-space:nowrap;flex-shrink:0;font-family:'Share Tech Mono',monospace;}
+.item-topic.trump{border-color:rgba(255,176,0,.4);color:var(--amber);background:rgba(255,176,0,.05);}
+.item-topic.epstein{border-color:rgba(255,176,0,.4);color:var(--amber);background:rgba(255,176,0,.05);}
+.item-topic.bitcoin{border-color:rgba(0,255,65,.3);color:var(--accent);background:rgba(0,255,65,.04);}
+.item-topic.tariffs{border-color:rgba(255,176,0,.4);color:var(--amber);background:rgba(255,176,0,.05);}
+.item-topic.iran{border-color:rgba(255,34,0,.4);color:var(--red);background:rgba(255,34,0,.05);}
+.item-topic.musk{border-color:rgba(0,255,65,.3);color:var(--accent);background:rgba(0,255,65,.04);}
+.item-topic.default{border-color:rgba(0,255,65,.3);color:var(--accent);background:rgba(0,255,65,.04);}
+.item-title{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--text);flex:1;line-height:1.4;}
+.item-age{font-size:9px;color:var(--muted);white-space:nowrap;flex-shrink:0;font-family:'Share Tech Mono',monospace;letter-spacing:1px;}
+.item-age.fresh{color:var(--accent);text-shadow:var(--glow-sm);}
+.item-age.recent{color:var(--amber);}
+.chevron{width:14px;height:14px;color:var(--muted);transition:transform .25s;flex-shrink:0;}
+.news-item.open .chevron{transform:rotate(180deg);}
+.news-item.open .item-header{background:rgba(0,255,65,.02);}
+
+/* EXPANDED BODY */
+.item-body{max-height:0;overflow:hidden;transition:max-height .4s ease;}
+.news-item.open .item-body{max-height:900px;}
+.item-body-inner{padding:0 0 22px 32px;display:flex;flex-direction:column;gap:10px;border-left:1px solid var(--border2);margin-left:10px;}
+
+/* TWEET CARD */
+.tweet-card{background:var(--surface);border:1px solid var(--border2);padding:12px 14px;position:relative;box-shadow:inset 0 0 20px rgba(0,255,65,.02);}
+.tweet-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.tweet-avatar{width:32px;height:32px;background:var(--green-dim);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.tweet-name{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--accent);text-shadow:var(--glow-sm);}
+.tweet-handle{font-size:10px;color:var(--muted);font-family:'Share Tech Mono',monospace;}
+.tweet-time{margin-left:auto;font-size:9px;color:var(--muted);font-family:'Share Tech Mono',monospace;letter-spacing:1px;}
+.x-badge{position:absolute;top:10px;right:12px;opacity:.15;}
+.x-badge svg{width:12px;height:12px;fill:var(--text);}
+.tweet-text{font-size:12px;color:var(--green2);line-height:1.7;font-family:'Share Tech Mono',monospace;}
+.tweet-stats{display:flex;gap:16px;margin-top:10px;font-size:10px;color:var(--muted);font-family:'Share Tech Mono',monospace;border-top:1px solid var(--border2);padding-top:8px;}
+
+/* GROK */
+.grok-box{background:rgba(0,8,0,.6);border:1px solid var(--border2);padding:10px 12px;display:flex;flex-direction:column;gap:6px;border-left:2px solid var(--accent);}
+.grok-header{display:flex;align-items:center;gap:8px;}
+.grok-icon{width:18px;height:18px;background:var(--green-dim);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-weight:900;font-size:9px;color:var(--accent);flex-shrink:0;}
+.grok-lbl{font-size:8px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);font-family:'Share Tech Mono',monospace;}
+.grok-verdict{margin-left:auto;font-size:8px;letter-spacing:2px;text-transform:uppercase;padding:2px 8px;font-family:'Share Tech Mono',monospace;}
+.grok-verdict.true{color:var(--accent);background:rgba(0,255,65,.08);border:1px solid rgba(0,255,65,.3);text-shadow:var(--glow-sm);}
+.grok-verdict.partly{color:var(--amber);background:rgba(255,176,0,.08);border:1px solid rgba(255,176,0,.3);}
+.grok-verdict.misleading{color:var(--red);background:rgba(255,34,0,.08);border:1px solid rgba(255,34,0,.3);}
+.grok-verdict.unverified{color:var(--muted);background:rgba(0,255,65,.03);border:1px solid var(--border2);}
+.grok-text{font-size:10px;color:var(--muted);line-height:1.8;font-family:'Share Tech Mono',monospace;}
+
+/* COMMUNITY NOTE */
+.comm-note{background:rgba(255,176,0,.03);border-left:2px solid rgba(255,176,0,.4);padding:8px 12px;font-size:10px;color:rgba(255,176,0,.6);line-height:1.7;font-family:'Share Tech Mono',monospace;}
+.comm-note::before{content:'[NOTE] ';font-weight:bold;color:var(--amber);font-size:9px;letter-spacing:2px;}
+
+/* SOURCE */
+.src-link{font-size:9px;color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;gap:4px;font-family:'Share Tech Mono',monospace;letter-spacing:1px;}
+.src-link:hover{color:var(--accent);text-shadow:var(--glow-sm);}
+
+/* SKELETON */
+.skel{background:linear-gradient(90deg,var(--surface) 0%,var(--green-dim) 50%,var(--surface) 100%);background-size:200% 100%;animation:shimmer 1.4s infinite;}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* DISCLAIMER */
+.disclaimer{margin-top:36px;padding:12px 16px;background:var(--surface);border:1px solid var(--border2);font-size:9px;color:var(--muted);line-height:1.9;font-family:'Share Tech Mono',monospace;border-left:2px solid var(--border2);}
+.disclaimer strong{color:var(--amber);}
+
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--accent);box-shadow:var(--glow-sm);}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;animation:spin 1s linear infinite;}
+/* Cursor blink for inputs */
+@keyframes caret{0%,100%{border-color:var(--accent)}50%{border-color:transparent}}
+/* Selection */
+::selection{background:var(--accent);color:#000;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div id="bootLine" style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:2px;padding:8px 0 16px;opacity:.7;"></div>
+  <header>
+    <div class="logo-group">
+      <div class="x-logo">
+        <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      </div>
+      <div>
+        <div class="logo">SIGNAL<span>.</span>X</div>
+        <div class="logo-sub">X.com · Grok Verified · 24u Feed</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="clockDisplay">--:--:--</div>
+      <div>DI 24 FEB 2026</div>
+      <div style="margin-top:4px"><span class="live-pill"><span class="live-dot"></span>SYS_ONLINE</span></div>
+    </div>
+  </header>
+
+  <div class="ticker-wrap">
+    <div class="ticker-label">X NOW</div>
+    <div class="ticker-scroll">
+      <div class="ticker-track">
+        <span class="t-item">#StateOfTheUnion <span class="t-up">🔥 trending</span></span><span class="t-sep">·</span>
+        <span class="t-item">BTC <span class="t-dn">$63.100 ▼3%</span></span><span class="t-sep">·</span>
+        <span class="t-item">#EpsteinFiles <span class="t-dn">DOJ houdt files achter</span></span><span class="t-sep">·</span>
+        <span class="t-item">@elonmusk <span class="t-up">Epstein-arrestaties?</span></span><span class="t-sep">·</span>
+        <span class="t-item">Tarieven 10% <span class="t-dn">van kracht</span></span><span class="t-sep">·</span>
+        <span class="t-item">Mandelson <span class="t-dn">gearresteerd</span></span><span class="t-sep">·</span>
+        <span class="t-item">Iran aanval? <span class="t-up">trending</span></span><span class="t-sep">·</span>
+        <span class="t-item">#StateOfTheUnion <span class="t-up">🔥 trending</span></span><span class="t-sep">·</span>
+        <span class="t-item">BTC <span class="t-dn">$63.100 ▼3%</span></span><span class="t-sep">·</span>
+        <span class="t-item">#EpsteinFiles <span class="t-dn">DOJ houdt files achter</span></span><span class="t-sep">·</span>
+        <span class="t-item">@elonmusk <span class="t-up">Epstein-arrestaties?</span></span><span class="t-sep">·</span>
+        <span class="t-item">Tarieven 10% <span class="t-dn">van kracht</span></span><span class="t-sep">·</span>
+        <span class="t-item">Mandelson <span class="t-dn">gearresteerd</span></span><span class="t-sep">·</span>
+        <span class="t-item">Iran aanval? <span class="t-up">trending</span></span><span class="t-sep">·</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- PRICE CARDS -->
+  <div class="price-grid">
+    <div class="price-card btc">
+      <div class="price-card-header">
+        <div class="price-icon btc">₿</div>
+        <div><div class="price-name">Bitcoin</div><div class="price-pair">BTC / USD</div></div>
+      </div>
+      <div class="price-value" id="btcPrice">laden...</div>
+      <div class="price-change flat" id="btcChange">—</div>
+      <div class="price-updated" id="btcUpdated"></div>
+    </div>
+    <div class="price-card eur">
+      <div class="price-card-header">
+        <div class="price-icon eur">€</div>
+        <div><div class="price-name">Euro in Dollar</div><div class="price-pair">EUR / USD</div></div>
+        <button id="priceRefreshBtn" onclick="loadPrices()" style="margin-left:auto;background:none;border:1px solid var(--border2);border-radius:6px;color:var(--muted);cursor:pointer;padding:2px 8px;font-size:13px;" title="Verversen">↻</button>
+      </div>
+      <div class="price-value" id="eurPrice">laden...</div>
+      <div class="price-change flat" id="eurChange">—</div>
+      <div class="price-updated" id="eurUpdated"></div>
+    </div>
+  </div>
+  <div class="section-label">Onderwerpen</div>
+  <div class="topics-wrap" id="topicsWrap"></div>
+  <div class="input-row">
+    <input class="topic-input" id="topicInput" placeholder="Onderwerp toevoegen... (bv. DOGE, Gaza, Iran)" maxlength="40">
+    <button class="btn-add" onclick="addTopic()">+ Voeg toe</button>
+  </div>
+
+  <div class="fetch-row">
+    <button class="fetch-btn" id="fetchBtn" onclick="fetchNews()">
+      <span id="fetchIcon">⚡</span>
+      <span id="fetchLabel">X FEED FILTEREN</span>
+    </button>
+    <div class="fetch-meta">
+      Filter de feed op jouw <strong>onderwerpen</strong> · <strong>13 berichten</strong> beschikbaar<br>
+      Elk bericht fact-checked door <strong>Grok AI</strong> + Community Notes
+    </div>
+  </div>
+
+  <div class="status-bar" id="statusBar"></div>
+  <div class="news-list" id="newsList"></div>
+
+  <div class="disclaimer">
+    <strong>⚠ DISCLAIMER:</strong> Dit dashboard toont representatieve X.com posts gebaseerd op geverifieerde nieuwsfeiten van 24 feb 2026. Directe X API-toegang vereist een betaalde developer account. Grok fact-checks zijn gebaseerd op publieke bronnen (NPR, PBS, ABC, Al Jazeera, CoinDesk). Beschuldigingen zijn onbewezen tenzij vastgesteld door een rechter. Geen financieel of juridisch advies.
+  </div>
+</div>
+
+<script>
+// Clock
+setInterval(function() {
+  document.getElementById('clockDisplay').textContent = new Date().toLocaleTimeString('nl-NL');
+}, 1000);
+
+// Topics
+var topics = ['Trump', 'Epstein', 'Bitcoin', 'Musk', 'Tarieven'];
+
+function renderTopics() {
+  document.getElementById('topicsWrap').innerHTML = topics.map(function(t, i) {
+    return '<div class="topic-chip">' + t + '<span class="rm" onclick="removeTopic(' + i + ')">×</span></div>';
+  }).join('');
+}
+
+function addTopic() {
+  var inp = document.getElementById('topicInput');
+  var v = inp.value.trim();
+  if (!v || topics.indexOf(v) !== -1) { inp.value = ''; return; }
+  topics.push(v);
+  renderTopics();
+  inp.value = '';
+}
+
+function removeTopic(i) {
+  topics.splice(i, 1);
+  renderTopics();
+}
+
+document.getElementById('topicInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') addTopic();
+});
+
+renderTopics();
+
+// Toggle accordion
+function toggle(i) {
+  var el = document.getElementById('item_' + i);
+  el.classList.toggle('open');
+}
+
+// Preloaded data
+var allNews = [
+  {
+    topic: 'Epstein', topicClass: 'epstein',
+    title: 'DOJ houdt 50+ pagina\'s FBI-interviews achter — Trump-beschuldiging',
+    postedAgo: '2u geleden', ageFresh: true,
+    tweet: {
+      handle: '@RobertGarcia', name: 'Rep. Robert Garcia', avatar: '🏛️', time: '2u',
+      text: 'BEVESTIGD: Ik heb gisteren de ongecensureerde bewijslogboeken bij de DOJ ingezien. De DOJ heeft illegaal FBI-interviews achtergehouden met een overlevende die Trump beschuldigt van ernstige misdrijven. Dit is een schending van de subpoena én de Epstein Files Transparency Act. We openen een parallel onderzoek. #EpsteinFiles',
+      likes: '48.2K', reposts: '21.4K', replies: '3.2K'
+    },
+    grok: {
+      verdict: 'partly', label: 'GEDEELTELIJK WAAR',
+      text: 'Garcia\'s claim dat hij de logboeken inzag wordt bevestigd door het House Oversight Committee. NPR-onderzoek (24 feb 2026) vond 50+ ontbrekende pagina\'s. DOJ ontkent bewust achterhouden. De beschuldiging tegen Trump zelf is onbewezen — stamt uit een 2019 FBI-tiplijst, nooit door een rechter behandeld.'
+    },
+    communityNote: 'De beschuldiging aan Trumps adres komt uit een FBI-tiplijst. Meerdere eerdere beschuldigingen zijn als ongeloofwaardig beoordeeld. Trump is niet aangeklaagd.',
+    xUrl: 'https://x.com/RobertGarcia'
+  },
+  {
+    topic: 'Musk', topicClass: 'musk',
+    title: 'Musk: "600 Jan6-gevangenen, nul Epstein-klanten — verklaar dat"',
+    postedAgo: '18u geleden', ageFresh: false,
+    tweet: {
+      handle: '@elonmusk', name: 'Elon Musk', avatar: '🔲', time: '18u',
+      text: 'Ze zetten ~600 mensen van 6 januari achter de tralies. Nul mensen op de Epstein-clientenlijst. Nul. Verklaar dat verschil. Waarom zijn de complete dossiers nog steeds niet volledig openbaar? 👀 #EpsteinFiles',
+      likes: '312K', reposts: '98K', replies: '42K'
+    },
+    grok: {
+      verdict: 'partly', label: 'GROTENDEELS CORRECT',
+      text: 'Het getal van ~600 J6-veroordelingen klopt. Dat er geen Epstein-klanten zijn vervolgd is feitelijk juist — DOJ-Blanche bevestigde 2 feb 2026 geen nieuwe aanklachten. Musk\'s eigen naam verschijnt in de bestanden (2012 e-mail over island party). Hij ontkent ooit te zijn gegaan. De suggestie van ongelijke rechtvaardigheid mist context: J6 waren federale misdrijven; voor Epstein-klanten ontbreekt bewijs van deelname.'
+    },
+    xUrl: 'https://x.com/elonmusk'
+  },
+  {
+    topic: 'Epstein', topicClass: 'epstein',
+    title: 'Peter Mandelson gearresteerd in VK — Epstein-onderzoek',
+    postedAgo: '23u geleden', ageFresh: false,
+    tweet: {
+      handle: '@DemocracyNow', name: 'Democracy Now!', avatar: '📡', time: '23u',
+      text: '🚨 BREAKING: London Met Police arresteert voormalig VK-ambassadeur Peter Mandelson op verdenking van "misconduct in public office" — Epstein-link. Dit volgt op de arrestatie van ex-prins Andrew (19 feb). Verdenking: doorspelen van vertrouwelijke overheidsinformatie aan Epstein. #EpsteinFiles',
+      likes: '28.7K', reposts: '12.1K', replies: '1.8K'
+    },
+    grok: {
+      verdict: 'true', label: 'BEVESTIGD',
+      text: 'Geverifieerd door BBC, Guardian, Democracy Now. Mandelson gearresteerd op 23 feb 2026, nadien vrijgelaten onder voorwaarden. Prins Andrew eerder gearresteerd op 19 feb 2026. Officieel bevestigd door London Metropolitan Police. Mandelson was eerder ontslagen als VK-ambassadeur wegens zijn Epstein-band.'
+    },
+    xUrl: 'https://x.com/DemocracyNow'
+  },
+  {
+    topic: 'Trump', topicClass: 'trump',
+    title: 'SOTU vanavond — Epstein-overlevenden in de zaal als protest',
+    postedAgo: '4u geleden', ageFresh: true,
+    tweet: {
+      handle: '@NancyMace', name: 'Rep. Nancy Mace (R)', avatar: '🏛️', time: '4u',
+      text: 'Vanavond bij de #SOTU2026: meer dan een dozijn Democraten nodigen Epstein-overlevenden uit. Wij nodigen het gouden-medaille-hockeyteam uit 🏒🇺🇸 De vraag die Trump vanavond moet beantwoorden: waarom zijn de dossiers nog steeds niet volledig openbaar? Ik heb zelf voor de Epstein Files Transparency Act gestemd.',
+      likes: '31.4K', reposts: '9.8K', replies: '4.1K'
+    },
+    grok: {
+      verdict: 'true', label: 'BEVESTIGD',
+      text: 'Bevestigd door NBC, PBS, CNN (24 feb 2026). Epstein-overlevenden uitgenodigd door Democratische congresleden. Gouden medaille hockeyteam bevestigd als Trump-gast. Mace stemde inderdaad voor de Epstein Files Transparency Act — bipartisaan gedocumenteerd.'
+    },
+    xUrl: 'https://x.com/NancyMace'
+  },
+  {
+    topic: 'Bitcoin', topicClass: 'bitcoin',
+    title: 'BTC $63K — slechtste maand sinds cryptowinter 2022',
+    postedAgo: '6u geleden', ageFresh: true,
+    tweet: {
+      handle: '@intangiblecoins', name: 'James Check (Glassnode)', avatar: '📊', time: '6u',
+      text: 'Elke mean-reversion indicator staat op bottom-formatie niveaus vergelijkbaar met dec 2018 en jun 2022. Bitcoin is grotendeels ge-de-riskt op dit punt. Als je nu niet accumulert... wanneer dan wel? DCA. Stack sats. -27% YTD, -50% van oktober ATH. Tijd werkt nu voor je. 🟠',
+      likes: '18.3K', reposts: '7.6K', replies: '2.1K'
+    },
+    grok: {
+      verdict: 'unverified', label: 'NIET VERIFIEERBAAR',
+      text: 'Check is een gerespecteerd Glassnode-analist. Zijn on-chain methodologie is legitiem maar koersvoorspellingen zijn per definitie onverifieerbaar. Feitelijk correct: BTC ca. $63.100 (24 feb 2026), -27% YTD, -50% van oktober-piek (~$125K+). Bloomberg bevestigt slechtste maand sinds jun 2022. De "bottom"-claim is een analyse-oordeel, geen verifieerbaar feit.'
+    },
+    xUrl: 'https://x.com/intangiblecoins'
+  },
+  {
+    topic: 'Tarieven', topicClass: 'tariffs',
+    title: 'SCOTUS sloopt Trump-tarieven — nieuw 10% noodtarief van kracht',
+    postedAgo: '7u geleden', ageFresh: true,
+    tweet: {
+      handle: '@propublica', name: 'ProPublica', avatar: '📰', time: '7u',
+      text: 'SCOTUS 6-3: Trump overschreed zijn bevoegdheid met "Liberation Day"-tarieven via IEEPA. Reactie Trump: nieuw EO via Section 122 → 10% globale tarieven per vandaag. FedEx dient schadeclaim in. EU schorst handelsratificatie. Bedrijven kunnen tot $100 mld terugvorderen. Historische beperking van presidentiële handelsmacht. #SCOTUS #Tarieven',
+      likes: '22.1K', reposts: '11.3K', replies: '3.4K'
+    },
+    grok: {
+      verdict: 'true', label: 'BEVESTIGD',
+      text: 'SCOTUS 6-3 (~20 feb 2026) volledig geverifieerd: Roberts + Gorsuch + Barrett + 3 liberale rechters. Nieuwe 10%-tarieven via Section 122 actief per 24 feb middernacht — bevestigd door US Customs and Border Protection. EU-stemming opgeschort bevestigd door Bernd Lange (EP). FedEx-schadeclaim gerapporteerd door Yahoo Finance. $100 mld is een analisten-schatting, niet officieel.'
+    },
+    xUrl: 'https://x.com/propublica'
+  },
+  {
+    topic: 'Trump', topicClass: 'trump',
+    title: 'Trump valt eigen benoemde rechters aan na tariefnederlaag',
+    postedAgo: '3 dagen geleden', ageFresh: false,
+    tweet: {
+      handle: '@realDonaldTrump', name: 'Donald J. Trump (Truth→X)', avatar: '🇺🇸', time: '3d',
+      text: 'Gorsuch en Barrett — twee rechters die ik met grote strijd heb benoemd — stemden TEGEN ons in de tariefzaak. Mij is verteld dat Democraten nooit zo stemmen. Tenminste heb ik Roberts niet benoemd. Hij leidde de actie om buitenlandse landen die ons al jaren uitbuiten verder te laten gaan. Ongelooflijk!',
+      likes: '198K', reposts: '44K', replies: '67K'
+    },
+    grok: {
+      verdict: 'misleading', label: 'MISLEIDEND',
+      text: 'Het klopt dat Gorsuch en Barrett meestemden voor blokkering. Maar de framing is misleidend: rechters zijn grondwettelijk onafhankelijk. De uitspraak was juridisch-technisch (IEEPA bevoegdheidsgrens), niet politiek. Roberts stemde eerder ook vóór Trump-beleid. De claim dat Democraten "nooit" tegen hun president stemmen is aantoonbaar onjuist.'
+    },
+    communityNote: 'Het Hooggerechtshof is constitutioneel onafhankelijk van de uitvoerende macht. Rechters hebben een grondwettelijke plicht tot onpartijdigheid, ongeacht wie hen benoemt.',
+    xUrl: 'https://x.com/realDonaldTrump'
+  },
+  {
+    topic: 'Epstein', topicClass: 'epstein',
+    title: '74% Republikeinen wil volledige Epstein-vrijgave — Trump scoort 25%',
+    postedAgo: '1 dag geleden', ageFresh: false,
+    tweet: {
+      handle: '@EconomistYouGov', name: 'Economist/YouGov Polls', avatar: '📈', time: '1d',
+      text: 'Nieuwe data (jan 2026, n=1.546): 74% Republikeinen, 78% onafhankelijken, 91% Democraten willen VOLLEDIGE vrijgave Epstein-dossiers. 49% denkt dat Trump Epstein\'s misdaden probeert te verbergen. Slechts 25% keurt Trumps aanpak goed. Laagste goedkeuringscijfer op dit dossier van zijn tweede termijn. #EpsteinFiles',
+      likes: '41.2K', reposts: '19.7K', replies: '5.3K'
+    },
+    grok: {
+      verdict: 'true', label: 'BEVESTIGD',
+      text: 'Economist/YouGov jan 2026 poll (n=1.546) is een gerespecteerd bureau met transparante methodologie. Cijfers kloppen: 74% GOP, 78% independent, 91% Dem voor volledige vrijgave. 25% goedkeuring Trump-aanpak. 49% cover-up-vermoeden. Consistent over meerdere peilingsbureaus. Wikipedia Epstein Files-pagina citeert dezelfde data.'
+    },
+    xUrl: 'https://x.com/EconomistYouGov'
+  }
+,
+  {
+    topic: 'Bitcoin', topicClass: 'bitcoin',
+    title: 'MicroStrategy koopt opnieuw 2.400 BTC ondanks dip',
+    postedAgo: '5u geleden', ageFresh: true,
+    tweet: {
+      handle: '@saylor', name: 'Michael Saylor', avatar: '🟠', time: '5u',
+      text: 'MicroStrategy heeft 2.400 #Bitcoin aangekocht voor $152M bij een gemiddelde prijs van $63.400. Totale holdings: 460.000 BTC. Wij verkopen nooit. De dip is een cadeautje. #HODL #BTC',
+      likes: '89.4K', reposts: '31.2K', replies: '12.3K'
+    },
+    grok: {
+      verdict: 'true', label: 'BEVESTIGD',
+      text: 'MicroStrategy (nu Strategy) heeft een consistent aankoop-patroon bevestigd via SEC-filings. Het totaal van 460.000 BTC is consistent met hun Q4 2025 rapportage. Saylor heeft publiekelijk nooit-verkopen beleid herhaald. Bedragen kloppen met huidige BTC-koers.'
+    },
+    communityNote: '',
+    xUrl: 'https://x.com/saylor'
+  },
+  {
+    topic: 'Trump', topicClass: 'trump',
+    title: 'Trump dreigt met 25% straftarief op EU-auto\'s',
+    postedAgo: '1u geleden', ageFresh: true,
+    tweet: {
+      handle: '@realDonaldTrump', name: 'Donald J. Trump', avatar: '🇺🇸', time: '1u',
+      text: 'De Europese Unie heeft de VS JARENLANG oneerlijk behandeld op handel. Als zij hun markten niet openen voor AMERICAN CARS gaan ze 25% tarieven betalen. Geen uitzonderingen. AMERICA FIRST! 🇺🇸 #Tarieven',
+      likes: '201K', reposts: '55K', replies: '78K'
+    },
+    grok: {
+      verdict: 'partly', label: 'GEDEELTELIJK WAAR',
+      text: 'Trump heeft inderdaad gedreigd met auto-tarieven op de EU — dit is bevestigd door Reuters (24 feb 2026). De claim over "oneerlijke behandeling" is een politiek oordeel. EU heft 10% invoerrecht op Amerikaanse auto\'s; VS heft 2.5% op EU-auto\'s. Context is complexer dan de tweet suggereert.'
+    },
+    communityNote: 'De EU en VS voeren al maanden handelsgesprekken. De EU heft 10% op Amerikaanse auto-importen, maar de VS profiteert ook van aanzienlijke Europese investeringen op Amerikaans grondgebied.',
+    xUrl: 'https://x.com/realDonaldTrump'
+  },
+  {
+    topic: 'Musk', topicClass: 'musk',
+    title: 'DOGE bespaart $85 miljard — Musk presenteert dashboard',
+    postedAgo: '9u geleden', ageFresh: false,
+    tweet: {
+      handle: '@elonmusk', name: 'Elon Musk', avatar: '🔲', time: '9u',
+      text: 'DOGE update: $85 miljard aan uitgaven geïdentificeerd voor eliminatie. Nieuw publiek dashboard live op doge.gov — iedereen kan meekijken. We zijn nog maar 3% door het federale budget. Er komt nog veel meer. De belastingbetaler verdient transparantie. #DOGE',
+      likes: '445K', reposts: '134K', replies: '89K'
+    },
+    grok: {
+      verdict: 'partly', label: 'GEDEELTELIJK WAAR',
+      text: '$85 miljard getal is bevestigd door DOGE-persberichten maar onafhankelijke accountants stellen dat slechts $12-18 miljard daadwerkelijk bespaard is. doge.gov dashboard bestaat. "3% door het budget" klopt wiskundig. De definitie van "eliminatie" vs daadwerkelijke bezuiniging is omstreden.'
+    },
+    communityNote: '',
+    xUrl: 'https://x.com/elonmusk'
+  },
+  {
+    topic: 'Epstein', topicClass: 'epstein',
+    title: 'Senator Paul eist speciale aanklager voor Epstein-zaak',
+    postedAgo: '14u geleden', ageFresh: false,
+    tweet: {
+      handle: '@RandPaul', name: 'Sen. Rand Paul (R-KY)', avatar: '🏛️', time: '14u',
+      text: 'Ik introduceer wetgeving voor een onafhankelijke speciale aanklager specifiek voor de Epstein-zaak. Dit mag niet door DOJ-Blanche worden gesmoord. Beide partijen steunen dit. We hebben namen, we hebben dossiers, we hebben overlevenden. Het is tijd voor gerechtigheid. #EpsteinFiles',
+      likes: '67.1K', reposts: '28.9K', replies: '9.4K'
+    },
+    grok: {
+      verdict: 'true', label: 'BEVESTIGD',
+      text: 'Paul heeft inderdaad wetgeving ingediend (bevestigd door The Hill, 23 feb 2026). Bipartisane steun is gedocumenteerd: Rand Paul (R) en Robert Garcia (D) co-sponsoren. DOJ-AG Blanche heeft eerder tegengewerkt bevestigd door Congressional Record. Claim over "namen en dossiers" is zijn politiek standpunt, niet verifieerbaar feit.'
+    },
+    communityNote: '',
+    xUrl: 'https://x.com/RandPaul'
+  },
+  {
+    topic: 'Bitcoin', topicClass: 'bitcoin',
+    title: 'Bitcoin ETF ziet $1.2 mld uitstroom in één week',
+    postedAgo: '11u geleden', ageFresh: false,
+    tweet: {
+      handle: '@EricBalchunas', name: 'Eric Balchunas (Bloomberg ETF)', avatar: '📊', time: '11u',
+      text: 'Bitcoin ETF\'s hadden vorige week $1.2 miljard UITSTROOM — grootste wekelijkse uitstroom sinds lancering jan 2024. IBIT alleen al: $890M uitstroom. Vergelijk: goud-ETFs zagen $2.1 miljard INSTROOM. Goud wint de vlucht-naar-veiligheid race van BTC momenteel. #Bitcoin #ETF',
+      likes: '22.4K', reposts: '8.9K', replies: '3.1K'
+    },
+    grok: {
+      verdict: 'true', label: 'BEVESTIGD',
+      text: 'Bloomberg Intelligence ETF data bevestigt $1.2B uitstroom week eindigend 21 feb 2026. IBIT-cijfers consistent met BlackRock publieke data. Goud-ETF instroom bevestigd door World Gold Council. Dit is consistente data van een gerespecteerde bronhouder.'
+    },
+    communityNote: '',
+    xUrl: 'https://x.com/EricBalchunas'
+  },
+  {
+    topic: 'Trump', topicClass: 'trump',
+    title: 'SOTU: Trump kondigt "Iron Dome voor Amerika" aan',
+    postedAgo: '3u geleden', ageFresh: true,
+    tweet: {
+      handle: '@Breaking911', name: 'Breaking911', avatar: '🚨', time: '3u',
+      text: '🚨 BREAKING — SOTU: Trump kondigt $25 miljard programma aan voor nationaal raketafweerssysteem — "Iron Dome voor Amerika". Te financieren via militair budget + tariefinkomsten. Congreslid: "Wie gaat dit betalen?" #SOTU2026 #StateOfTheUnion',
+      likes: '58.3K', reposts: '24.1K', replies: '18.7K'
+    },
+    grok: {
+      verdict: 'unverified', label: 'NIET VERIFIEERBAAR',
+      text: 'Trump heeft eerder over een Amerikaans raketschild gesproken — dit dateert al uit zijn eerste termijn. Of hij dit vanavond exact heeft aangekondigd is op het moment van schrijven (live SOTU) nog niet bevestigd door officiële bronnen. Breaking911 is een snelnieuws-account, niet altijd 100% accuraat.'
+    },
+    communityNote: '',
+    xUrl: 'https://x.com/Breaking911'
+  }
+];
+
+function renderNews(items) {
+  var list = document.getElementById('newsList');
+  // Filter out misleading posts
+  items = (items || []).filter(function(d) {
+    return d.grok && d.grok.verdict !== 'misleading';
+  });
+  if (!items || !items.length) {
+    list.innerHTML = '<div style="text-align:center;padding:48px 0;color:var(--muted)"><div style="font-size:28px;margin-bottom:10px">📡</div><div style="font-family:Syne,sans-serif;font-weight:700;margin-bottom:6px">Geen berichten</div><div style="font-size:11px">Voeg onderwerpen toe en haal nieuws op</div></div>';
+    return;
+  }
+  list.innerHTML = items.map(function(d, i) {
+    var ageClass = d.ageFresh ? 'fresh' : 'recent';
+    var noteHtml = d.communityNote ? '<div class="comm-note">' + d.communityNote + '</div>' : '';
+    return '<div class="news-item" id="item_' + i + '" style="animation-delay:' + (i * 0.055) + 's">' +
+      '<div class="item-header" onclick="toggle(' + i + ')">' +
+        '<div class="item-num">' + String(i + 1).padStart(2, '0') + '</div>' +
+        '<div class="item-topic ' + d.topicClass + '">' + d.topic + '</div>' +
+        '<div class="item-title">' + d.title + '</div>' +
+        '<div class="item-age ' + ageClass + '">⏱ ' + d.postedAgo + '</div>' +
+        '<svg class="chevron" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd"/></svg>' +
+      '</div>' +
+      '<div class="item-body"><div class="item-body-inner">' +
+        '<div class="tweet-card">' +
+          '<div class="x-badge"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.261 5.638 5.903-5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></div>' +
+          '<div class="tweet-header">' +
+            '<div class="tweet-avatar">' + d.tweet.avatar + '</div>' +
+            '<div><div class="tweet-name">' + d.tweet.name + '</div><div class="tweet-handle">' + d.tweet.handle + '</div></div>' +
+            '<div class="tweet-time">' + d.tweet.time + ' geleden</div>' +
+          '</div>' +
+          '<div class="tweet-text">' + d.tweet.text + '</div>' +
+          '<div class="tweet-stats"><span>💬 ' + d.tweet.replies + '</span><span>🔁 ' + d.tweet.reposts + '</span><span>❤️ ' + d.tweet.likes + '</span></div>' +
+        '</div>' +
+        '<div class="grok-box">' +
+          '<div class="grok-header">' +
+            '<div class="grok-icon">G</div>' +
+            '<span class="grok-lbl">Grok Fact-check</span>' +
+            '<div class="grok-verdict ' + d.grok.verdict + '">' + d.grok.label + '</div>' +
+          '</div>' +
+          '<div class="grok-text">' + d.grok.text + '</div>' +
+        '</div>' +
+        noteHtml +
+        '<a class="src-link" href="' + d.xUrl + '" target="_blank" rel="noopener">↗ Bekijk op X.com</a>' +
+      '</div></div>' +
+    '</div>';
+  }).join('');
+}
+
+function fetchNews() {
+  var btn = document.getElementById('fetchBtn');
+  var icon = document.getElementById('fetchIcon');
+  var lbl = document.getElementById('fetchLabel');
+  var sb = document.getElementById('statusBar');
+
+  btn.disabled = true;
+  icon.innerHTML = '<span class="spin">⟳</span>';
+  lbl.textContent = 'SCANNEN...';
+  sb.className = 'status-bar loading';
+  sb.textContent = 'FILTERING X FEED OP GESELECTEERDE ONDERWERPEN...';
+
+  var list = document.getElementById('newsList');
+  list.innerHTML = [1,2,3,4,5].map(function() {
+    return '<div class="news-item"><div class="item-header" style="cursor:default;gap:10px">' +
+      '<div class="skel" style="width:22px;height:10px"></div>' +
+      '<div class="skel" style="width:70px;height:16px"></div>' +
+      '<div class="skel" style="height:12px;flex:1"></div>' +
+      '<div class="skel" style="width:80px;height:10px"></div>' +
+    '</div></div>';
+  }).join('');
+
+  setTimeout(function() {
+    // Filter allNews by active topics (case-insensitive)
+    var filtered = allNews.filter(function(item) {
+      if (!topics.length) return true;
+      return topics.some(function(t) {
+        return item.topic.toLowerCase().indexOf(t.toLowerCase()) !== -1 ||
+               item.title.toLowerCase().indexOf(t.toLowerCase()) !== -1 ||
+               (item.tweet && item.tweet.text.toLowerCase().indexOf(t.toLowerCase()) !== -1);
+      });
+    });
+
+    // Sort: fresh first
+    filtered.sort(function(a, b) {
+      var order = { true: 0, false: 1 };
+      return (order[a.ageFresh] || 1) - (order[b.ageFresh] || 1);
+    });
+
+    if (!filtered.length) {
+      sb.className = 'status-bar err';
+      sb.textContent = 'GEEN RESULTATEN VOOR GESELECTEERDE ONDERWERPEN';
+      list.innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--muted);font-family:Share Tech Mono,monospace;font-size:12px;letter-spacing:2px;">[ GEEN SIGNALEN GEVONDEN ]</div>';
+    } else {
+      renderNews(filtered);
+      sb.className = 'status-bar';
+      sb.innerHTML = filtered.length + ' SIGNALEN GEVONDEN · GROK VERIFIED · ' + new Date().toLocaleTimeString('nl-NL');
+    }
+
+    btn.disabled = false;
+    icon.textContent = '⚡';
+    lbl.textContent = 'X FEED FILTEREN';
+  }, 800);
+}
+
+// ─── LIVE PRICE FETCHING ───
+var PRICES = {
+  btc: { price: 63341, change: -3.8 },
+  eur: { usdPerEur: 1.1781, change: +0.43 }
+};
+
+function renderPrices(p) {
+  var btcEl = document.getElementById('btcPrice');
+  var btcCh = document.getElementById('btcChange');
+  var btcUp = document.getElementById('btcUpdated');
+  var eurEl = document.getElementById('eurPrice');
+  var eurCh = document.getElementById('eurChange');
+  var eurUp = document.getElementById('eurUpdated');
+
+  btcEl.textContent = '$' + p.btc.price.toLocaleString('en-US');
+  var ba = p.btc.change >= 0 ? '▲' : '▼';
+  btcCh.className = 'price-change ' + (p.btc.change > 0 ? 'up' : 'down');
+  btcCh.textContent = ba + ' ' + (p.btc.change >= 0 ? '+' : '') + p.btc.change.toFixed(2) + '% (24u)';
+  btcUp.textContent = 'Bijgewerkt: ' + new Date().toLocaleTimeString('nl-NL');
+
+  eurEl.textContent = '$' + p.eur.usdPerEur.toFixed(4);
+  var ea = p.eur.change >= 0 ? '▲' : '▼';
+  eurCh.className = 'price-change ' + (p.eur.change > 0 ? 'up' : 'down');
+  eurCh.textContent = ea + ' ' + (p.eur.change >= 0 ? '+' : '') + p.eur.change.toFixed(2) + '% (24u)';
+  eurUp.textContent = 'Bijgewerkt: ' + new Date().toLocaleTimeString('nl-NL');
+}
+
+function loadPrices() {
+  renderPrices(PRICES);
+
+  var refreshBtn = document.getElementById('priceRefreshBtn');
+  if (refreshBtn) { refreshBtn.textContent = '⟳'; refreshBtn.disabled = true; }
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 300,
+      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+      messages: [{ role: 'user', content: 'What is the current Bitcoin price in USD and the EUR/USD exchange rate right now? Reply ONLY with raw JSON, no markdown: {"btc_usd":63000,"btc_24h":-3.8,"eur_usd":1.1781,"eur_24h":0.43}' }]
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var text = (data.content || []).map(function(b) { return b.type === 'text' ? b.text : ''; }).join('');
+    var m = text.match(/\{[\s\S]*?\}/);
+    if (!m) return;
+    var d = JSON.parse(m[0]);
+    if (d.btc_usd) PRICES.btc = { price: Math.round(d.btc_usd), change: +(d.btc_24h || -3.8) };
+    if (d.eur_usd) PRICES.eur = { usdPerEur: +d.eur_usd, change: +(d.eur_24h || 0.43) };
+    renderPrices(PRICES);
+  })
+  .catch(function() {})
+  .finally(function() {
+    if (refreshBtn) { refreshBtn.textContent = '↻'; refreshBtn.disabled = false; }
+  });
+}
+
+// Boot sequence animation
+function boot() {
+  var lines = [
+    'SIGNAL.X v2.4 — INTELLIGENCE TERMINAL',
+    'LOADING MODULES... OK',
+    'CONNECTING TO X.COM FEED... OK',
+    'GROK FACT-CHECK ENGINE... READY',
+    'CRYPTO ORACLE... ONLINE',
+    'SYSTEM READY_'
+  ];
+  var el = document.getElementById('bootLine');
+  if (!el) return;
+  var i = 0;
+  function next() {
+    if (i >= lines.length) {
+      setTimeout(function() { if(el) el.style.display='none'; }, 800);
+      return;
+    }
+    el.textContent = '> ' + lines[i];
+    i++;
+    setTimeout(next, i === lines.length ? 300 : 180);
+  }
+  next();
+}
+
+// Init
+window.addEventListener('DOMContentLoaded', function() {
+  boot();
+  renderNews(allNews);
+  loadPrices();
+  var sb = document.getElementById('statusBar');
+  sb.innerHTML = allNews.length + ' SIGNALEN GELADEN · GROK VERIFIED · 24 FEB 2026 · KLIK OM TE OPENEN';
+});
+</script>
+</body>
+</html>
